@@ -1,21 +1,25 @@
 const https = require('https');
-const mySignature = require('../../SignatureUtils')
+const mySignature = require('../india/SignatureUtils')
 const moment = require("moment/moment");
 const {v4: uuidv4} = require('uuid');
-const myContants = require('./ContantsV2')
+const myContants = require('../india/ContantsV2')
 
-async function inquiryOrderStatus(merchantId, merchantSecret, baseDomain) {
+async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,tradeNo,orderNo,tradeType) {
+    let baseDomain = myContants.BASE_URL_SANDBOX
+    if (env === 'production') {
+        baseDomain = myContants.BASE_URL
+    }
     //get merchantId from merchant platform
     const inquiryOrderStatusReq = {
-        tradeType: myContants.TRADE_TYPE_PAY_IN,
-        tradeNo: 'platform trade no ',
-        orderNo: 'merchant order no'
+        tradeType: tradeType,
+        tradeNo: tradeNo,
+        orderNo: orderNo
     }
     const minify = mySignature.minify(inquiryOrderStatusReq);
 
     const timestamp = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     const signData = timestamp + '|' + merchantSecret + '|' + minify;
-    const signature = mySignature.sha256RsaSignature(signData, myContants.PRIVATE_KEY)
+    const signature = mySignature.sha256RsaSignature(signData, privateKey)
 
     //options  you have changge hostname, timestamp,
     const options = {
@@ -50,12 +54,8 @@ async function inquiryOrderStatus(merchantId, merchantSecret, baseDomain) {
 }
 
 
-//production
-inquiryOrderStatus(myContants.MERCHANT_ID, myContants.MERCHANT_SECRET, myContants.BASE_URL);
+inquiryOrderStatus("","","","","","","");
 
-
-//sandbox
-inquiryOrderStatus(myContants.MERCHANT_ID_SANDBOX, myContants.MERCHANT_SECRET_SANDBOX, myContants.BASE_URL_SANDBOX);
 
 
 //********** end post ***************

@@ -1,20 +1,24 @@
 const https = require('https');
-const mySignature = require('../../SignatureUtils')
+const mySignature = require('../brazil/SignatureUtils')
 const moment = require("moment/moment");
 const {v4: uuidv4} = require('uuid');
-const myContants = require('./ContantsV2')
+const myContants = require('../brazil/ContantsV2')
 
-async function inquiryBalance(merchantId, merchantSecret, baseDomain) {
+async function inquiryBalance(env,merchantId, merchantSecret,privateKey,accountNo) {
     //get merchantId from merchant platform
     const inquiryBalanceReq = {
-        accountNo: 'your account no',
+        accountNo: accountNo,
         balanceTypes: ["BALANCE"]
     }
     const minify = mySignature.minify(inquiryBalanceReq);
 
     const timestamp = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     const signData = timestamp + '|' + merchantSecret + '|' + minify;
-    const signature = mySignature.sha256RsaSignature(signData, myContants.PRIVATE_KEY)
+    const signature = mySignature.sha256RsaSignature(signData, privateKey)
+    let baseDomain = myContants.BASE_URL_SANDBOX
+    if (env === 'production'){
+        baseDomain = myContants.BASE_URL
+    }
 
     //options  you have changge hostname, timestamp,
     const options = {
@@ -47,11 +51,7 @@ async function inquiryBalance(merchantId, merchantSecret, baseDomain) {
     req.write(minify);
     req.end();
 }
-//sandbox
-inquiryBalance(myContants.MERCHANT_ID_SANDBOX, myContants.MERCHANT_SECRET_SANDBOX, myContants.BASE_URL_SANDBOX);
 
-
-//production
-inquiryBalance(myContants.MERCHANT_ID, myContants.MERCHANT_SECRET, myContants.BASE_URL);
+inquiryBalance("","","","","");
 
 //********** end post ***************

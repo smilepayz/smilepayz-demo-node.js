@@ -1,62 +1,31 @@
 const crypto = require('crypto');
 const https = require('https');
-const mySignature =require('../../SignatureUtils')
+const mySignature =require('../india/SignatureUtils')
 const moment = require("moment/moment");
 const { v4: uuidv4 } = require('uuid');
-const myContants = require('./ContantsV2')
+const myContants = require('../india/ContantsV2')
 
-async function payInRequest(merchantId,merchantSecret,baseDomain){
+async function payInRequest(env,merchantId,merchantSecret,privateKey,paymentMethod,email,amount){
+    let baseDomain = myContants.BASE_URL_SANDBOX
+    if (env === 'production') {
+        baseDomain = myContants.BASE_URL
+    }
     const orderNo = merchantId.replace("sandbox-","S") + mySignature.generateRandomString(16);
     //get merchantId from merchant platform
     const payInParam = {
         orderNo: orderNo.substring(0,32),
         purpose: 'demo for node.js',
-        paymentMethod: 'the payment method you need ',
+        paymentMethod: paymentMethod,
         money:{
-            //fixme currency for indonesia transaction,you need to change if you want to do other regions
-            currency: myContants.INDONESIA_CURRENCY,
-            amount: 100000,
+            currency: myContants.INDIA_CURRENCY,
+            amount: amount,
         },
         merchant:{
             merchantId: merchantId
         },
-        //fixme demo for indonesia transaction,you need to change if you want to do other regions
-        area: myContants.INDONESIA_CODE,
-        //Conditional Mandatory
-        additionalParam: {
-            //fixme only for Thailand pay in,this is means your paying bank account no
-            payerAccountNo: '123456789',
-        },
-        //below field is optional
+        area: myContants.INDIA_CODE,
         payer: {
-            name: 'payer name',
-            phone: '12345678'
-        },
-        receiver:{
-            name: 'payer name',
-            phone: '12345678'
-        },
-        productDetail: 'details',
-        itemDetailList: [
-            {
-                name: "mac",
-                quantity: 1,
-                price: 100
-            }
-        ],
-        billingAddress: {
-            address: 'No.B1 Pluit',
-            city: 'jakarta',
-            postalCode: '14450',
-            phone: '098754321',
-            countryCode: '111111',
-        },
-        shippingAddress: {
-            address: 'No.B1 Pluit',
-            city: 'jakarta',
-            postalCode: '14450',
-            phone: '098754321',
-            countryCode: '111111',
+            email: email,
         }
     }
     const minify = JSON.stringify(payInParam);
@@ -64,7 +33,7 @@ async function payInRequest(merchantId,merchantSecret,baseDomain){
 
     const timestamp = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     const signData = timestamp + '|' +  merchantSecret + '|' + minify;
-    const signature = mySignature.sha256RsaSignature(signData,myContants.PRIVATE_KEY)
+    const signature = mySignature.sha256RsaSignature(signData,privateKey)
 
     //options  you have changge hostname, timestamp,
     const options = {
@@ -96,10 +65,7 @@ async function payInRequest(merchantId,merchantSecret,baseDomain){
     req.write(minify);
     req.end();
 }
-//production
-payInRequest(myContants.MERCHANT_ID,myContants.MERCHANT_SECRET,myContants.BASE_URL);
+payInRequest("","","","","","","");
 
-//sandbox
-payInRequest(myContants.MERCHANT_ID_SANDBOX,myContants.MERCHANT_SECRET_SANDBOX,myContants.BASE_URL_SANDBOX);
 
 //********** end post ***************
