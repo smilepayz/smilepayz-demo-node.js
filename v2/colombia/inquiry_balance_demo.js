@@ -1,21 +1,20 @@
 const https = require('https');
-const mySignature = require('../indonesia/SignatureUtils')
+const mySignature = require('../colombia/SignatureUtils')
 const moment = require("moment/moment");
 const {v4: uuidv4} = require('uuid');
-const myContants = require('../indonesia/ContantsV2')
+const myContants = require('../colombia/ContantsV2')
 
-async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,tradeNo,orderNo,tradeType) {
+async function inquiryBalance(env,merchantId, merchantSecret,privateKey,accountNo) {
     let baseDomain = myContants.BASE_URL_SANDBOX
     if (env === 'production') {
         baseDomain = myContants.BASE_URL
     }
     //get merchantId from merchant platform
-    const inquiryOrderStatusReq = {
-        tradeType: tradeType,
-        tradeNo: tradeNo,
-        orderNo: orderNo
+    const inquiryBalanceReq = {
+        accountNo: accountNo,
+        balanceTypes: ["BALANCE"]
     }
-    const minify = mySignature.minify(inquiryOrderStatusReq);
+    const minify = mySignature.minify(inquiryBalanceReq);
 
     const timestamp = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     const signData = timestamp + '|' + merchantSecret + '|' + minify;
@@ -25,7 +24,7 @@ async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,trad
     const options = {
         hostname: baseDomain,
         port: 443,
-        path: '/v2.0/inquiry-status',
+        path: '/v2.0/inquiry-balance',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -52,9 +51,7 @@ async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,trad
     req.write(minify);
     req.end();
 }
-
-
-inquiryOrderStatus("","","","","","","");
+inquiryBalance("","","","","");
 
 
 

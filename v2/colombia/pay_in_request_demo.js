@@ -1,31 +1,44 @@
+const crypto = require('crypto');
 const https = require('https');
-const mySignature = require('../indonesia/SignatureUtils')
+const mySignature = require('../colombia/SignatureUtils')
 const moment = require("moment/moment");
 const {v4: uuidv4} = require('uuid');
-const myContants = require('../indonesia/ContantsV2')
+const myContants = require('../colombia/ContantsV2')
 
-async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,tradeNo,orderNo,tradeType) {
+async function payInRequest(env, merchantId, merchantSecret, privateKey, paymentMethod, amount, name) {
     let baseDomain = myContants.BASE_URL_SANDBOX
     if (env === 'production') {
         baseDomain = myContants.BASE_URL
     }
+    const orderNo = merchantId.replace("sandbox-", "S") + mySignature.generateRandomString(16);
     //get merchantId from merchant platform
-    const inquiryOrderStatusReq = {
-        tradeType: tradeType,
-        tradeNo: tradeNo,
-        orderNo: orderNo
+    const payInParam = {
+        orderNo: orderNo.substring(0, 32),
+        purpose: 'demo for node.js',
+        paymentMethod: paymentMethod,
+        money: {
+            currency: myContants.COLOMBIA_CURRENCY,
+            amount: amount,
+        },
+        merchant: {
+            merchantId: merchantId
+        },
+        area: myContants.COLOMBIA_CODE,
+        payer: {
+            name: name
+        }
     }
-    const minify = mySignature.minify(inquiryOrderStatusReq);
+    const minify = JSON.stringify(payInParam);
+    console.log(`minify String: ${minify}`);
 
     const timestamp = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     const signData = timestamp + '|' + merchantSecret + '|' + minify;
     const signature = mySignature.sha256RsaSignature(signData, privateKey)
 
-    //options  you have changge hostname, timestamp,
     const options = {
         hostname: baseDomain,
         port: 443,
-        path: '/v2.0/inquiry-status',
+        path: '/v2.0/transaction/pay-in',
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -34,7 +47,6 @@ async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,trad
             'X-PARTNER-ID': merchantId
         }
     };
-    console.log(`request path: ${options.hostname + options.path}`);
 
     //post request
     const req = https.request(options, (res) => {
@@ -53,9 +65,14 @@ async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,trad
     req.end();
 }
 
+// name is required
+const merchant_id = '';
+const privateKey = '';
+const merchant_secret = "";
+const payment_method = '';
+const amount = 100;
+const name = "";
 
-inquiryOrderStatus("","","","","","","");
-
-
+payInRequest("", merchant_id, merchant_secret, privateKey, payment_method, amount, name);
 
 //********** end post ***************

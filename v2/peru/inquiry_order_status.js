@@ -1,8 +1,8 @@
 const https = require('https');
-const mySignature = require('../indonesia/SignatureUtils')
+const mySignature = require('../india/SignatureUtils')
 const moment = require("moment/moment");
 const {v4: uuidv4} = require('uuid');
-const myContants = require('../indonesia/ContantsV2')
+const myContants = require('../india/ContantsV2')
 
 async function inquiryOrderStatus(env,merchantId, merchantSecret,privateKey,tradeNo,orderNo,tradeType) {
     let baseDomain = myContants.BASE_URL_SANDBOX
